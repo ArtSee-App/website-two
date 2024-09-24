@@ -54,7 +54,7 @@ export default {
   justify-content: space-between; /* Space between the two main sections */
   align-items: center; /* Center align the items vertically */
   padding: 40px 0; /* Top and bottom padding */
-  margin-top: 80px; /* Added margin to prevent overlap with the fixed header */
+  margin-top: 50px; /* Added margin to prevent overlap with the fixed header */
   width: 100%;
   max-width: 1200px; /* Maximum width of the container */
   margin-left: auto; /* Center the container horizontally */
@@ -146,15 +146,39 @@ export default {
   padding: 10px 20px; /* Padding for the buttons */
   border: none; /* No border */
   border-radius: 10px; /* Rounded corners */
-  margin-right: 10px; /* Space between the buttons */
+  margin-right: 15px; /* Space between the buttons */
   cursor: pointer; /* Pointer cursor on hover */
-  transition: background-color 0.3s; /* Smooth transition for hover effect */
+  transition: background-color 0.3s, transform 0.3s; /* Smooth transition for hover effects */
   font-weight: 500; /* Medium weight for button text */
+  /* Optional: Adding box-shadow for better visual appeal */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-/* Hover effect for buttons */
+/* Butonlar için arka plan rengi animasyonu */
+@keyframes buttonBackgroundChange {
+  0% {
+    background-color: #6A1D85; /* İlk renk */
+  }
+  33% {
+    background-color: #B902A7; /* İkinci renk */
+  }
+  66% {
+    background-color: #fd7403; /* Üçüncü renk */
+  }
+  100% {
+    background-color: #6A1D85; /* Dördüncü renk */
+  }
+}
+
+/* Hover durumu için butonlara animasyon ekleyin */
 .get-app-btn:hover, .partner-btn:hover {
-  background-color: #5a32ff; /* Darker color on hover */
+  animation: buttonBackgroundChange 2s linear infinite; /* Arka plan rengi animasyonu */
+  transform: scale(1.15); /* Mevcut büyütme animasyonu */
+}
+/* Optional: Active state for buttons */
+.get-app-btn:active, .partner-btn:active {
+  transform: scale(1); /* Return to original size when clicked */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Slightly reduce shadow */
 }
 
 /* Container styling for the promo video section */

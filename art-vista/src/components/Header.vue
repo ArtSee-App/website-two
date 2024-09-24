@@ -6,9 +6,9 @@
         <span class="logo-text">ArtVista</span>
       </div>
       <ul>
-        <li><a href="#app">App</a></li>
-        <li><a href="#api">API</a></li>
-        <li><a href="#about">About Us</a></li>
+        <li><router-link to="/">App</router-link></li>
+        <li><router-link to="/api">API</router-link></li>
+        <li><router-link to="/about">About Us</router-link></li>
       </ul>
     </nav>
   </header>
