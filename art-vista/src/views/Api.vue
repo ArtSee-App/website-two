@@ -3,6 +3,8 @@
   <div class="api-page">
     <Header />
     <main>
+      <HeroApi /> <!-- Include the HeroApi component here -->
+      <ApiSearch />
       <h1>API Page</h1>
       <p>Welcome to the API page!</p>
       <!-- Add your API page content here -->
@@ -13,12 +15,17 @@
 
 <script>
 import Header from '@/components/Header.vue';
+import HeroApi from '@/components/HeroApi.vue';
+import ApiSearch from '@/components/ApiSearch.vue';
 import Footer from '@/components/Footer.vue';
+
 
 export default {
   name: 'Api',
   components: {
     Header,
+    HeroApi,
+    ApiSearch,
     Footer
   }
 };
