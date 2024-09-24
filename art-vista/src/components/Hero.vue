@@ -154,19 +154,19 @@ export default {
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-/* Butonlar için arka plan rengi animasyonu */
+/* Animation for Button Colors */
 @keyframes buttonBackgroundChange {
   0% {
-    background-color: #6A1D85; /* İlk renk */
+    background-color: #6A1D85;
   }
   33% {
-    background-color: #B902A7; /* İkinci renk */
+    background-color: #B902A7;
   }
   66% {
-    background-color: #fd7403; /* Üçüncü renk */
+    background-color: #fd7403;
   }
   100% {
-    background-color: #6A1D85; /* Dördüncü renk */
+    background-color: #6A1D85; 
   }
 }
 
