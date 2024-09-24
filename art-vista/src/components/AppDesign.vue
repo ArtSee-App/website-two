@@ -56,7 +56,7 @@
           },
           {
             src: require('@/assets/background_paintings/gun_salesman.jpg'),
-            top: '60%',
+            top: '50%',
             left: '80%',
             width: '250px',
             rotation: 10,
@@ -76,7 +76,7 @@
           },*/
           {
             src: require('@/assets/background_paintings/wanderer.jpg'),
-            top: '30%',
+            top: '20%',
             left: '0%',
             width: '150px',
             rotation: 10,
@@ -96,7 +96,7 @@
           },
           {
             src: require('@/assets/background_paintings/two_cut_sunflowers.jpg'),
-            top: '70%',
+            top: '60%',
             left: '15%',
             width: '350px',
             rotation: -15,
@@ -120,6 +120,7 @@
     justify-content: center;
     margin: 50px 0;
     text-align: left;
+    padding-bottom: 150px; /* Added padding to create space at the bottom */
   }
   
   /* Background Images Container */

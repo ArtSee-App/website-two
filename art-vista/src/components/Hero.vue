@@ -54,9 +54,11 @@ export default {
   justify-content: space-between; /* Space between the two main sections */
   align-items: center; /* Center align the items vertically */
   padding: 40px 0; /* Top and bottom padding */
+  margin-top: 80px; /* Added margin to prevent overlap with the fixed header */
   width: 100%;
   max-width: 1200px; /* Maximum width of the container */
-  margin: 0 auto; /* Center the container horizontally */
+  margin-left: auto; /* Center the container horizontally */
+  margin-right: auto; /* Center the container horizontally */
 }
 
 /* Left section styling */
