@@ -136,7 +136,7 @@ export default {
 .app-design {
   position: relative; /* Establish positioning context for absolute elements */
   display: flex;
-  flex-direction: row;
+  flex-direction: row; /* Horizontal layout by default */
   align-items: center;
   justify-content: center;
   margin: 50px 0;
@@ -232,6 +232,119 @@ export default {
   }
   100% {
     background-position: 0% 50%;
+  }
+}
+
+/* *** New Media Queries for Responsive Design *** */
+
+/* *** New Media Queries for Responsive Design *** */
+
+/* Tablet Devices (max-width: 1024px) */
+@media screen and (max-width: 1024px) {
+  .app-design {
+    padding-bottom: 100px; /* Reduce bottom padding */
+  }
+
+  .app-description {
+    max-width: 250px; /* Slightly reduce text container width */
+    margin-right: 50px; /* Reduce right margin */
+    font-size: 20px; /* Slightly smaller font size */
+  }
+
+  .iphone-wrapper {
+    width: 250px; /* Reduce iPhone wrapper width */
+    height: 550px; /* Reduce iPhone wrapper height */
+  }
+
+  .background-image {
+    width: 250px !important; /* Scale down background images slightly */
+  }
+}
+
+/* Mobile Devices (max-width: 768px) */
+/* This is the breakpoint when the burger icon activates */
+/* Mobile Devices (max-width: 768px) */
+/* This is the breakpoint when the burger icon activates */
+@media screen and (max-width: 768px) {
+  .app-design {
+    flex-direction: column; /* Stack elements vertically */
+    padding-bottom: 80px; /* Adjust bottom padding */
+    text-align: center; /* Center align text */
+    margin: 30px 0; /* Reduce vertical margins */
+  }
+
+  .app-description {
+    max-width: 90%; /* Allow text to take up more width */
+    margin: 0 0 20px 0; /* Remove right margin and add bottom margin */
+    font-size: 18px; /* Further reduce font size */
+  }
+
+  .iphone-wrapper {
+    width: 220px; /* Adjust iPhone wrapper width */
+    height: 500px; /* Adjust iPhone wrapper height */
+    margin-top: 20px; /* Add space between text and iPhone */
+    /* Adjust border radius for tablet screens */
+    border-radius: 25px; /* Previously 25px, no change needed here */
+    overflow: visible; /* Allow blurry background to extend beyond borders */
+  }
+
+  .iphone {
+    border-radius: calc(25px - 5px); /* 20px */
+  }
+
+  .background-image {
+    width: 200px !important; /* Scale down background images */
+  }
+
+  /* Optional: Hide some background images to reduce clutter */
+  .background-image:nth-child(1),
+  .background-image:nth-child(2),
+  .background-image:nth-child(3),
+  .background-image:nth-child(4),
+  .background-image:nth-child(5),
+  .background-image:nth-child(6) {
+    display: none;
+  }
+}
+
+/* Mobile Phones (max-width: 480px) */
+@media screen and (max-width: 480px) {
+  .app-design {
+    padding-bottom: 50px; /* Further reduce bottom padding */
+    margin: 20px 0; /* Further reduce vertical margins */
+    overflow: visible; /* Allow child elements to overflow */
+  }
+
+  .app-description {
+    font-size: 16px; /* Further reduce font size */
+  }
+
+  .iphone-wrapper {
+    width: 70vw; /* Further reduce iPhone wrapper width */
+    height: calc(2.2 * 70vw); /* Set height to 1.3 times the width */
+    margin-top: 15px; /* Adjust space between text and iPhone */
+    border-radius: 20px; /* Decrease border radius for smaller screens */
+    overflow: visible; /* Allow blurry background to extend beyond borders */
+  }
+
+  .iphone {
+    border-radius: calc(20px - 5px); /* 15px */
+  }
+
+  .background-image {
+    width: 150px !important; /* Significantly reduce background image size */
+    filter: blur(0px) !important; /* Remove blur effect */
+  }
+
+  /* Remove the blurred pseudo-element */
+  .iphone-wrapper::before {
+    display: none; /* Hide the pseudo-element to eliminate blur */
+  }
+
+  /* Optional: Hide additional background images if necessary */
+  .background-image:nth-child(2),
+  .background-image:nth-child(4) {
+    display: none;
   }
 }
 </style>

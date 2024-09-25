@@ -31,7 +31,9 @@
     </div>
 
     <!-- Right Section: Promo Video Component -->
-    <PromoVideo />
+    <div class="promo-video-container">
+      <PromoVideo />
+    </div>
   </div>
 </template>
 
@@ -48,6 +50,9 @@ export default {
 </script>
 
 <style scoped>
+/* Import the Judson font from Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Judson&display=swap');
+
 /* Container styling for the hero section, using flexbox for layout */
 .hero-container {
   display: flex;
@@ -152,6 +157,7 @@ export default {
   font-weight: 500; /* Medium weight for button text */
   /* Optional: Adding box-shadow for better visual appeal */
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin-bottom: 10px;
 }
 
 /* Animation for Button Colors */
@@ -170,11 +176,12 @@ export default {
   }
 }
 
-/* Hover durumu için butonlara animasyon ekleyin */
+/* Hover state for buttons */
 .get-app-btn:hover, .partner-btn:hover {
-  animation: buttonBackgroundChange 2s linear infinite; /* Arka plan rengi animasyonu */
-  transform: scale(1.15); /* Mevcut büyütme animasyonu */
+  animation: buttonBackgroundChange 2s linear infinite; /* Background color animation */
+  transform: scale(1.15); /* Existing scale animation */
 }
+
 /* Optional: Active state for buttons */
 .get-app-btn:active, .partner-btn:active {
   transform: scale(1); /* Return to original size when clicked */
@@ -184,8 +191,70 @@ export default {
 /* Container styling for the promo video section */
 .promo-video-container {
   flex: 1; /* Allows the promo video section to take up available space */
+  aspect-ratio: 16 / 9; /* Maintain 16:9 aspect ratio */
   display: flex;
   justify-content: center; /* Center align horizontally */
   align-items: center; /* Center align vertically */
 }
+
+/* Responsive design for iPhone screens and small devices */
+@media screen and (max-width: 480px) {
+  /* Adjust the hero container to stack vertically */
+  .hero-container {
+    flex-direction: column; /* Stack items vertically */
+    padding: 30px 0px; /* Reduce padding */
+  }
+
+  /* Make the PromoVideo component maintain aspect ratio and remove stroke */
+  .promo-video-container,
+  .promo-video-container .promo-video-container {
+    width: 100vw; /* Full width */
+    margin-top: 20px; /* Space above the video */
+    aspect-ratio: 16 / 9; /* Maintain 16:9 aspect ratio */
+    
+    
+  }
+
+  /* Ensure the PromoVideo scales correctly within its container */
+  .promo-video-container > * {
+    width: 120%;
+    height: 100%;
+  }
+
+  /* Adjust the hero titles section */
+  .hero-titles {
+    padding-right: 0; /* Remove right padding */
+    max-width: 100%; /* Allow full width */
+  }
+
+  /* Reduce the main title font size */
+  .hero-titles h1 {
+    font-size: 1.8rem; /* Smaller font size */
+    text-align: center; /* Center align text */
+  }
+
+  /* Reduce list item font size */
+  .hero-titles ul li {
+    font-size: 1rem; /* Smaller font size */
+    text-align: center; /* Center align text */
+  }
+
+  /* Hide the "Become a partner" button */
+  .partner-btn {
+    display: none; /* Hide on small screens */
+  }
+
+  /* Center the "Get the app" button */
+  .buttons {
+    display: flex;
+    justify-content: center; /* Center the button */
+  }
+
+  .get-app-btn {
+    margin-right: 0; /* Remove right margin */
+    width: 100%; /* Make button full width */
+    max-width: 200px; /* Optional: limit maximum width */
+  }
+}
+
 </style>

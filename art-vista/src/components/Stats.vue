@@ -1,6 +1,11 @@
 <template>
   <section class="stats">
-    <div class="stat" v-for="(stat, index) in stats" :key="index">
+    <div
+      class="stat"
+      v-for="(stat, index) in stats"
+      :key="index"
+      :class="{ 'hide-on-mobile': stat.label === 'App' }"
+    >
       <!-- Applying the highlight class to the value text -->
       <h2 class="highlight">{{ stat.value }}</h2>
       <p>{{ stat.label }}</p>
@@ -75,5 +80,53 @@ export default {
   color: #f1f1f1; /* Brighter white color */
   font-weight: 600; /* Bolder weight for the label text */
   margin-top: 5px; /* Space above the label */
+}
+
+/* *** New Media Queries for Responsive Typography and Margins *** */
+
+/* Tablet Devices */
+@media screen and (max-width: 768px) {
+  .stat h2 {
+    font-size: 1.5em; /* Reduce font size for tablets */
+  }
+
+  .stat p {
+    font-size: 1.2em; /* Reduce font size for tablet labels */
+  }
+
+  .stats {
+    margin: 30px 0; /* Reduce vertical margin for tablets */
+  }
+
+  /* Optional: Adjust flex properties for tablets if needed */
+  .stat {
+    flex: 0 0 45%; /* Each stat takes up 45% width */
+    margin: 0 5%; /* Add horizontal margin for spacing */
+  }
+}
+
+/* Mobile Phones */
+@media screen and (max-width: 480px) {
+  .hide-on-mobile {
+    display: none; /* Hide the third stat */
+  }
+
+  .stat h2 {
+    font-size: 1.2em; /* Further reduce font size for mobile phones */
+  }
+
+  .stat p {
+    font-size: 1em; /* Further reduce font size for mobile phone labels */
+  }
+
+  .stats {
+    margin: 20px 0; /* Further reduce vertical margin for mobile phones */
+    justify-content: center; /* Center the remaining two stats */
+  }
+
+  .stat {
+    flex: 0 0 45%; /* Each remaining stat takes up 45% width */
+    margin: 0 2.5%; /* Add horizontal margin for spacing */
+  }
 }
 </style>

@@ -263,7 +263,7 @@
   .title-holder {
     position: absolute;
     top: -25px; /* Adjust this value as needed */
-    right: 650px; /* Adjust this value as needed */
+    right: 70%; /* Adjust this value as needed */
     background: #260853; /* Purple background */
     padding: 10px 30px;
     border-radius: 10px;
