@@ -69,7 +69,10 @@
                     class="result-image"
                   />
                   <div class="result-details">
-                    <h3>{{ currentResult.title }}</h3>
+                    <h3>
+                      <span class="artvista-choice" v-if="currentResultIndex === 0">ArtVista's choice</span>
+                      {{ currentResult.title }}
+                    </h3>
                     <p>Artist: {{ currentResult.artist }}</p>
                     <p>
                       Confidence Score:
@@ -301,11 +304,22 @@ export default {
 
     // Process bounding boxes and display them on the image
     processBoundingBoxes(bboxes) {
-      this.boundingBoxes = bboxes;
-
       if (bboxes.length > 0) {
+        this.boundingBoxes = bboxes;
         // Automatically click the first bounding box with index 0
         this.onBoundingBoxClick(bboxes[0], 0);
+      } else {
+        // If no bounding boxes, create a bbox covering the entire image
+        const fullImageBBox = {
+          x: 0,
+          y: 0,
+          w: this.imageWidth,
+          h: this.imageHeight,
+        };
+        const bboxObj = { bbox: fullImageBBox };
+        this.boundingBoxes = [bboxObj];
+        // Automatically click this bbox
+        this.onBoundingBoxClick(bboxObj, 0);
       }
     },
 
@@ -759,12 +773,12 @@ export default {
 
 .result-content {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
 }
 
 .result-image {
   max-height: 250px; /* Set a maximum height */
-  max-width: 300px;  /* Set a maximum width */
+  max-width: 250px;  /* Set a maximum width */
   width: 100%;
   height: 100%;
   object-fit: contain; /* Ensures the image maintains aspect ratio */
@@ -775,15 +789,43 @@ export default {
 .result-details {
   color: #ffffff;
   text-align: left;
+  margin: 0;
 }
 
 .result-details h3 {
   font-size: 1.2rem;
-  margin: 5px 0;
+  margin: 0;
 }
 
 .result-details p {
-  margin: 3px 0;
+  margin: 0;
+}
+
+/* Styling for "ArtVista's choice" */
+.artvista-choice {
+  display: block;
+  font-size: 1.2rem; /* Adjust the font size as needed */
+  font-weight: bold;
+  margin-bottom: 5px;
+  background: linear-gradient(45deg, #03fd6b, #ffa600, #ff5e00 );
+  background-size: 200% 200%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gradientAnimation 5s linear infinite;
+}
+
+/* Keyframes for the gradient animation */
+@keyframes gradientAnimation {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
 }
 
 .pagination-buttons {
