@@ -1,3 +1,4 @@
+<!-- Hero.vue -->
 <template>
   <div class="hero-container">
     <!-- Left Section: Titles and Buttons -->
@@ -50,8 +51,7 @@ export default {
 </script>
 
 <style scoped>
-/* Import the Judson font from Google Fonts */
-@import url('https://fonts.googleapis.com/css2?family=Judson&display=swap');
+/* Removed Judson font import since it's now global */
 
 /* Container styling for the hero section, using flexbox for layout */
 .hero-container {
@@ -211,8 +211,6 @@ export default {
     width: 100vw; /* Full width */
     margin-top: 20px; /* Space above the video */
     aspect-ratio: 16 / 9; /* Maintain 16:9 aspect ratio */
-    
-    
   }
 
   /* Ensure the PromoVideo scales correctly within its container */
@@ -256,5 +254,4 @@ export default {
     max-width: 200px; /* Optional: limit maximum width */
   }
 }
-
 </style>

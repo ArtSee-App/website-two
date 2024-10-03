@@ -1,486 +1,922 @@
 <template>
-    <section class="api-search-section">
-      <div class="playground-container">
-        <!-- Secondary rectangle (title holder) -->
-        <div class="title-holder">
-          <h1 class="playground-title">Demo Playground</h1>
-        </div>
-        <div class="playground-content">
-          <div class="left-content">
-            <!-- Left content (e.g., additional instructions or information) -->
-            <p class="demo-instructions">How to use this demo?</p>
-          </div>
-          <div class="right-content">
-            <ol>
-              <li><span>1.</span> Upload a photo of a painting.</li>
-              <li><span>2.</span> The API will try to crop the image.</li>
-              <li><span>3.</span> Select one of the detected paintings.</li>
-              <li><span>4.</span> The most similar paintings to the selected crop will be retrieved.</li>
-            </ol>
-          </div>
-        </div>
-  
-        <!-- Image processing container -->
-        <div class="image-processing-container">
-          <!-- Demo image container -->
-          <div class="demo-image-container">
-            <div class="demo-image">
-              <!-- Bind src to imageSrc data property -->
-              <!-- Added :alt for accessibility -->
-              <img ref="demoImage" :src="imageSrc" alt="Demo Image" />
-            </div>
-            <div class="demo-buttons">
-              <button class="demo-button" @click="triggerFileUpload">
-                → Use your photo
-              </button>
-              <button class="demo-button" @click="fetchTokenAndSendImage">
-                → Try a random Photo
-              </button>
-              <!-- Hidden file input -->
-              <input
-                type="file"
-                ref="fileInput"
-                accept="image/*"
-                @change="handleImageUpload"
-                style="display: none;"
-              />
-            </div>
-          </div>
-  
-          <!-- Cropped images container -->
-          <div class="cropped-images-container">
-            <div v-if="croppedImages.length > 0">
-              <div
-                v-for="(croppedImage, index) in croppedImages"
-                :key="index"
-                class="cropped-image"
-              >
-                <img :src="croppedImage" :alt="'Cropped Image ' + index" />
-              </div>
-            </div>
-            <div v-else>
-              <p>No cropped images to display.</p>
-            </div>
-          </div>
+  <section class="api-search-section">
+    <div class="playground-container" :style="{ minHeight: containerMinHeight + 'px' }">
+      <!-- Playground Content -->
+      <div class="playground-content">
+        <div class="right-content">
+          <h2 class="playground-title">How to use this Playground?</h2>
+          <ol>
+            <li>Upload a photo of a painting.</li>
+            <li>The API will detect paintings.</li>
+            <li>Click on any detected painting.</li>
+            <li>The most similar paintings will be retrieved.</li>
+          </ol>
         </div>
       </div>
-    </section>
-  </template>
-  
-  <script>
-  export default {
-    name: "ApiSearch",
-    data() {
+
+      <!-- Image processing container -->
+      <div class="image-processing-container">
+        <!-- Demo image container -->
+        <div class="demo-image-container">
+          <div class="demo-image">
+            <div class="image-container">
+              <!-- Bind src to imageSrc data property -->
+              <!-- Added :alt for accessibility -->
+              <img
+                ref="demoImage"
+                :src="imageSrc"
+                alt="Demo Image"
+                @load="onImageLoad"
+              />
+              <transition-group name="fade" tag="div">
+                <div
+                  v-for="(bboxObj, index) in boundingBoxes"
+                  :key="bboxObj.id || index"
+                  class="bounding-box"
+                  :style="getBoundingBoxStyle(bboxObj.bbox, index)"
+                  @click="onBoundingBoxClick(bboxObj, index)"
+                  @mouseover="hoveredBBoxIndex = index"
+                  @mouseleave="hoveredBBoxIndex = null"
+                ></div>
+              </transition-group>
+            </div>
+          </div>
+          <div class="demo-buttons">
+            <button class="demo-button" @click="triggerFileUpload">
+              → Use your photo
+            </button>
+            <button class="demo-button" @click="fetchRandomPhoto">
+              → Try a random Photo
+            </button>
+            <!-- Hidden file input -->
+            <input
+              type="file"
+              ref="fileInput"
+              accept="image/*"
+              @change="handleImageUpload"
+              style="display: none;"
+            />
+          </div>
+
+          <!-- API Results Display -->
+          <div class="api-results" v-if="apiResults && currentResult">
+            <transition name="fade" mode="out-in" appear>
+              <div class="result-item" :key="currentResultIndex">
+                <div class="result-content">
+                  <img
+                    :src="preloadedImages[currentResultIndex]"
+                    alt="Artwork Image"
+                    class="result-image"
+                  />
+                  <div class="result-details">
+                    <h3>{{ currentResult.title }}</h3>
+                    <p>Artist: {{ currentResult.artist }}</p>
+                    <p>
+                      Confidence Score:
+                      {{ apiResults.scores[currentResultIndex] }}%
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </transition>
+            <!-- Pagination Buttons -->
+            <div class="pagination-buttons">
+              <button
+                v-for="index in paginationIndexes"
+                :key="index"
+                @click="currentResultIndex = index - 1"
+                :class="['pagination-button', { active: currentResultIndex === index - 1 }]"
+              >
+                {{ index }}
+              </button>
+            </div>
+          </div>
+          <!-- End of API Results Display -->
+        </div>
+      </div>
+    </div>
+  </section>
+</template>
+
+<script>
+// Import all images from the assets/api_images directory using require.context (Webpack)
+const requireImages = require.context('@/assets/api_images', false, /\.(png|jpe?g|svg)$/i);
+
+export default {
+  name: "ApiSearch",
+  data() {
+    return {
+      // Initialize imageSrc with a random image from assets/api_images/
+      imageSrc: '', // Will be set in created hook
+      token: null,             // To store the fetched token
+      boundingBoxes: [],       // To store the bounding boxes
+      imageWidth: 0,           // Natural width of the image
+      imageHeight: 0,          // Natural height of the image
+      displayedImageWidth: 0,  // Current displayed width
+      displayedImageHeight: 0, // Current displayed height
+      boxOpacity: 0.2,         // Opacity of the bounding box fill
+      borderThickness: 2,      // Thickness of the bounding box border
+      borderColor: '#9b51e0',  // Original color of the bounding box border
+      fillColor: 'rgba(155, 81, 224, 1)', // Base fill color without opacity
+      hoveredBBoxIndex: null,  // To track the hovered bounding box
+      activeBBoxIndex: null,   // To track the active bounding box
+      maxImageHeight: 250,     // Maximum image height in pixels (adjustable)
+      maxImageWidth: 300,      // Maximum image width in pixels (adjustable)
+      resizeObserver: null,    // ResizeObserver instance
+      apiResults: null,        // To store API response data
+      currentResultIndex: 0,   // Index of the currently displayed result
+      loading: false,          // Loading state for API calls
+      imageNeedsProcessing: false, // Flag to indicate if image needs processing
+      containerMinHeight: 0,   // To set the min-height of the container
+      preloadedImages: [],     // Array to store preloaded images
+      availableImages: [],     // Array to store all available image paths
+      currentImageIndex: null, // Index of the currently displayed local image
+      currentImageSourceType: 'local', // 'local' or 'uploaded'
+    };
+  },
+  computed: {
+    currentResult() {
+      if (this.apiResults && this.apiResults.website_results) {
+        return this.apiResults.website_results[this.currentResultIndex];
+      }
+      return null;
+    },
+    paginationIndexes() {
+      if (this.apiResults && this.apiResults.website_results) {
+        // Generate an array of indices starting from 1
+        return this.apiResults.website_results.map((_, index) => index + 1);
+      }
+      return [];
+    },
+  },
+  methods: {
+    // Method to trigger the hidden file input
+    triggerFileUpload() {
+      this.$refs.fileInput.click();
+    },
+
+    // Handle image upload
+    handleImageUpload(event) {
+      const file = event.target.files[0];
+      if (file && file.type.startsWith('image/')) {
+        this.boundingBoxes = []; // Clear existing bounding boxes instantly
+        this.apiResults = null;  // Clear previous API results
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          this.imageSrc = e.target.result;   // Update the imageSrc with the new image
+          this.imageNeedsProcessing = true;  // Indicate that the image needs processing
+          this.currentImageSourceType = 'uploaded';
+          this.currentImageIndex = null; // Reset currentImageIndex since it's an uploaded image
+          // Reset the file input to allow uploading the same file again if needed
+          this.$refs.fileInput.value = null;
+        };
+        reader.readAsDataURL(file);
+      } else {
+        alert('Please upload a valid image file.');
+        // Reset the file input if the file is invalid
+        this.$refs.fileInput.value = null;
+      }
+    },
+
+    // Fetch a random photo from assets/api_images/
+    fetchRandomPhoto() {
+      if (this.availableImages.length === 0) {
+        console.error('No images available to select.');
+        return;
+      }
+
+      if (this.availableImages.length === 1) {
+        // Only one image available; select it if it's not already selected
+        if (this.currentImageSourceType === 'local' && this.currentImageIndex === 0) {
+          console.warn('Only one image available. Reusing the same image.');
+          return;
+        }
+        this.imageSrc = this.availableImages[0];
+        this.imageNeedsProcessing = true;
+        this.boundingBoxes = []; // Clear existing bounding boxes
+        this.apiResults = null;  // Clear previous API results
+        this.currentResultIndex = 0;
+        this.currentImageIndex = 0;
+        this.currentImageSourceType = 'local';
+        return;
+      }
+
+      let randomIndex;
+      if (this.currentImageSourceType === 'local' && this.currentImageIndex !== null) {
+        // Exclude the current image index
+        do {
+          randomIndex = Math.floor(Math.random() * this.availableImages.length);
+        } while (randomIndex === this.currentImageIndex);
+      } else {
+        // Current image is uploaded or not set; pick any random index
+        randomIndex = Math.floor(Math.random() * this.availableImages.length);
+      }
+
+      this.imageSrc = this.availableImages[randomIndex];
+      this.imageNeedsProcessing = true;
+      this.boundingBoxes = []; // Clear existing bounding boxes
+      this.apiResults = null;  // Clear previous API results
+      this.currentResultIndex = 0;
+      this.currentImageIndex = randomIndex;
+      this.currentImageSourceType = 'local';
+    },
+
+    // Fetch token from API
+    async fetchToken() {
+      try {
+        const response = await fetch('https://api.artvista.app/get_custom_token/?token=art%21vista', {
+          method: 'GET',
+          headers: {
+            'accept': 'application/json'
+          }
+        });
+        if (!response.ok) {
+          throw new Error(`Token fetch failed with status ${response.status}`);
+        }
+        const data = await response.json();
+        return data.id_token; // Return the custom token
+      } catch (error) {
+        console.error("Failed to fetch token: ", error);
+        return null;
+      }
+    },
+
+    // Fetch token and send image to API
+    async fetchTokenAndSendImage() {
+      try {
+        // Fetch token if not already fetched
+        if (!this.token) {
+          this.token = await this.fetchToken();
+          if (!this.token) {
+            console.error("Failed to retrieve token.");
+            return;
+          }
+        }
+
+        await this.sendImageToAPI(this.token);
+      } catch (error) {
+        console.error("Error in fetchTokenAndSendImage: ", error);
+      }
+    },
+
+    // Send image to API
+    async sendImageToAPI(token) {
+      try {
+        const imgElement = this.$refs.demoImage; // Get reference to the image element
+
+        if (!imgElement) {
+          throw new Error("Image element not found. Ensure the ref is correctly set.");
+        }
+
+        // Convert image to Blob
+        const response = await fetch(this.imageSrc);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch image from src: ${this.imageSrc}`);
+        }
+        const imageBlob = await response.blob();
+        const file = new File([imageBlob], "demo-image.jpg", { type: imageBlob.type });
+
+        // Prepare FormData for the API request
+        const formData = new FormData();
+        formData.append('file', file);
+
+        // Make the API request using the retrieved token
+        const bboxResponse = await fetch(`https://api.artvista.app/get_bbox_for_website/?token=${token}`, {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!bboxResponse.ok) {
+          throw new Error(`API request failed with status ${bboxResponse.status}`);
+        }
+
+        // Parse the response and store bounding boxes
+        const bboxes = await bboxResponse.json();
+        this.processBoundingBoxes(bboxes);
+
+      } catch (error) {
+        console.error("Failed to process image: ", error);
+      }
+    },
+
+    // Process bounding boxes and display them on the image
+    processBoundingBoxes(bboxes) {
+      this.boundingBoxes = bboxes;
+
+      if (bboxes.length > 0) {
+        // Automatically click the first bounding box with index 0
+        this.onBoundingBoxClick(bboxes[0], 0);
+      }
+    },
+
+    // Method to calculate styles for bounding boxes
+    getBoundingBoxStyle(bbox, index) {
+      const imgElement = this.$refs.demoImage;
+      if (!imgElement) {
+        console.error("Image element not found.");
+        return {};
+      }
+
+      const currentWidth = imgElement.clientWidth;
+      const currentHeight = imgElement.clientHeight;
+
+      const scaleX = currentWidth / this.imageWidth;
+      const scaleY = currentHeight / this.imageHeight;
+
+      const isHovered = this.hoveredBBoxIndex === index;
+      const isActive = this.activeBBoxIndex === index;
+
+      // Define padding (in pixels)
+      const paddingTop = 10; // 10px breathing room
+
+      // Adjust styles based on hover or active state
+      let borderThicknessVar = this.borderThickness;
+      let borderColorVar = this.borderColor;
+      let fillOpacityVar = this.boxOpacity;
+      let transformVar = 'scale(1)';
+      let backgroundColorVar;
+
+      if (isActive || isHovered) {
+        borderThicknessVar = this.borderThickness + 1;
+        borderColorVar = '#00AFE6'; // Active/Hover color
+        fillOpacityVar = this.boxOpacity + 0.1;
+        transformVar = 'scale(1.05)';
+        backgroundColorVar = `rgba(0, 175, 230, ${fillOpacityVar})`;
+      } else {
+        backgroundColorVar = `rgba(155, 81, 224, ${this.boxOpacity})`;
+      }
+
+      // Adjust the y-coordinate of the bounding box with padding
+      let adjustedBBoxY = bbox.y;
+      const maxBBoxY = this.imageHeight - bbox.h;
+
+      if (adjustedBBoxY < paddingTop / scaleY) {
+        adjustedBBoxY = paddingTop / scaleY; // Shift down with padding
+      } else if (adjustedBBoxY > maxBBoxY - paddingTop / scaleY) {
+        adjustedBBoxY = maxBBoxY - paddingTop / scaleY; // Shift up with padding
+      }
+
+      // Calculate adjusted positions and sizes
+      const adjustedLeft = bbox.x * scaleX;
+      const adjustedTop = adjustedBBoxY * scaleY; // + paddingTop; // Add padding to the top
+      const adjustedWidth = bbox.w * scaleX;
+      const adjustedHeight = bbox.h * scaleY;
+
       return {
-        // Initial image source using require to load the image
-        imageSrc: require('@/assets/api_images/demo-image.jpg'),
-        token: null, // To store the fetched token
-        croppedImages: [], // To store the cropped images
+        position: 'absolute',
+        top: `${adjustedTop}px`,
+        left: `${adjustedLeft}px`,
+        width: `${adjustedWidth}px`,
+        height: `${adjustedHeight}px`,
+        border: `${borderThicknessVar}px solid ${borderColorVar}`,
+        backgroundColor: backgroundColorVar,
+        borderRadius: '5px',
+        boxSizing: 'border-box',
+        transform: transformVar,
+        transition: 'all 0.3s ease',
       };
     },
-    methods: {
-      // Method to trigger the hidden file input
-      triggerFileUpload() {
-        this.$refs.fileInput.click();
-      },
-  
-      // Handle image upload
-      handleImageUpload(event) {
-        const file = event.target.files[0];
-        if (file && file.type.startsWith('image/')) {
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            this.imageSrc = e.target.result; // Update the imageSrc with the new image
-            this.fetchTokenAndSendImage(); // Automatically send the new image to the API
-            // Reset the file input to allow uploading the same file again if needed
-            this.$refs.fileInput.value = null;
-          };
-          reader.readAsDataURL(file);
-        } else {
-          alert('Please upload a valid image file.');
-          // Reset the file input if the file is invalid
-          this.$refs.fileInput.value = null;
+
+    // Handle bounding box click
+    onBoundingBoxClick(bboxObj, index) {
+      // Clear previous results
+      this.apiResults = null;
+      this.currentResultIndex = 0;
+      this.preloadedImages = []; // Clear preloaded images
+      // Set the activeBBoxIndex to the clicked bbox's index
+      this.activeBBoxIndex = index;
+      // Ensure token is available
+      if (!this.token) {
+        this.fetchToken().then((token) => {
+          this.token = token;
+          this.cropAndSendImage(bboxObj.bbox);
+        });
+      } else {
+        this.cropAndSendImage(bboxObj.bbox);
+      }
+    },
+
+    // Crop the image according to the bounding box and send it to the API
+    cropAndSendImage(bbox) {
+      const imgElement = this.$refs.demoImage;
+
+      // Create a canvas element
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+
+      // Set canvas dimensions to bounding box dimensions
+      canvas.width = bbox.w;
+      canvas.height = bbox.h;
+
+      // Adjust the y-coordinate if necessary
+      let adjustedBBoxY = bbox.y;
+      if (adjustedBBoxY < 0) {
+        adjustedBBoxY = 0;
+      } else if (adjustedBBoxY + bbox.h > this.imageHeight) {
+        adjustedBBoxY = this.imageHeight - bbox.h;
+      }
+
+      // Draw the image onto the canvas, cropping it according to bbox
+      ctx.drawImage(
+        imgElement,
+        bbox.x, adjustedBBoxY, bbox.w, bbox.h, // Source rectangle
+        0, 0, bbox.w, bbox.h // Destination rectangle
+      );
+
+      // Convert the canvas to Blob
+      canvas.toBlob(async (blob) => {
+        if (!blob) {
+          console.error("Canvas to Blob conversion failed.");
+          return;
         }
-      },
-  
-      // Fetch token from API
-      async fetchToken() {
+
+        // Create a File from the Blob
+        const file = new File([blob], 'cropped-image.jpg', { type: blob.type });
+
+        // Prepare FormData
+        const formData = new FormData();
+        formData.append('file', file);
+
+        // Send the image to the API
         try {
-          const response = await fetch('https://api.artvista.app/get_custom_token/?token=art%21vista', {
-            method: 'GET',
-            headers: {
-              'accept': 'application/json'
-            }
-          });
-          if (!response.ok) {
-            throw new Error(`Token fetch failed with status ${response.status}`);
-          }
-          const data = await response.json();
-          return data.id_token; // Return the custom token
-        } catch (error) {
-          console.error("Failed to fetch token: ", error);
-          return null;
-        }
-      },
-  
-      // Fetch token and send image to API
-      async fetchTokenAndSendImage() {
-        try {
-          // Fetch token if not already fetched
-          if (!this.token) {
-            this.token = await this.fetchToken();
-            if (!this.token) {
-              console.error("Failed to retrieve token.");
-              return;
-            }
-          }
-  
-          await this.sendImageToAPI(this.token);
-        } catch (error) {
-          console.error("Error in fetchTokenAndSendImage: ", error);
-        }
-      },
-  
-      // Send image to API
-      async sendImageToAPI(token) {
-        try {
-          const imgElement = this.$refs.demoImage; // Get reference to the image element
-  
-          if (!imgElement) {
-            throw new Error("Image element not found. Ensure the ref is correctly set.");
-          }
-  
-          console.log("Image Element: ", imgElement);
-  
-          // Convert image to Blob
-          const response = await fetch(this.imageSrc);
-          if (!response.ok) {
-            throw new Error(`Failed to fetch image from src: ${this.imageSrc}`);
-          }
-          const imageBlob = await response.blob();
-          const file = new File([imageBlob], "demo-image.jpg", { type: imageBlob.type });
-  
-          console.log("Image File: ", file);
-  
-          // Prepare FormData for the API request
-          const formData = new FormData();
-          formData.append('file', file);
-  
-          console.log("Form Data: ", formData);
-  
-          // Make the API request using the retrieved token
-          const bboxResponse = await fetch(`https://api.artvista.app/get_bbox_for_website/?token=${token}`, {
+          const response = await fetch(`https://api.artvista.app/artwork_search_for_website/?token=${this.token}`, {
             method: 'POST',
+            headers: {
+              'accept': 'application/json',
+            },
             body: formData,
           });
-  
-          if (!bboxResponse.ok) {
-            throw new Error(`API request failed with status ${bboxResponse.status}`);
+
+          if (!response.ok) {
+            throw new Error(`API request failed with status ${response.status}`);
           }
-  
-          console.log("Response: ", bboxResponse);
-  
-          // Parse the response and log bbox coordinates
-          const bboxes = await bboxResponse.json();
-          console.log("Bounding Box Coordinates: ", bboxes);
-  
-          // Process the image and create cropped images
-          this.processBoundingBoxes(bboxes);
-  
+
+          const data = await response.json();
+          this.apiResults = data;            // Store the API response
+          this.currentResultIndex = 0;       // Reset to display the highest confidence result
+          this.preloadImagesAndSetContainerHeight(); // Preload images and set container height
+
         } catch (error) {
-          console.error("Failed to process image: ", error);
+          console.error('Error sending cropped image to API:', error);
         }
-      },
-  
-      // Process bounding boxes and create cropped images
-      processBoundingBoxes(bboxes) {
-        const img = new Image();
-        img.crossOrigin = 'anonymous';
-        img.onload = () => {
-          const croppedImages = [];
-  
-          bboxes.forEach((bboxObj) => {
-            const bbox = bboxObj.bbox;
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-  
-            canvas.width = bbox.w;
-            canvas.height = bbox.h;
-  
-            ctx.drawImage(
-              img,
-              bbox.x,
-              bbox.y,
-              bbox.w,
-              bbox.h,
-              0,
-              0,
-              bbox.w,
-              bbox.h
-            );
-  
-            const dataURL = canvas.toDataURL();
-            croppedImages.push(dataURL);
-          });
-  
-          this.croppedImages = croppedImages;
-        };
-  
-        img.src = this.imageSrc;
-      },
+
+      }, 'image/jpeg');
     },
-    mounted() {
-      // Process the initial image when the component is mounted
-      this.fetchTokenAndSendImage();
-    }
-  };
-  </script>
-  
-  <style scoped>
-  /* API Search Section */
-  .api-search-section {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 70vh; /* Changed from height */
-    background: #10113300; /* Transparent background */
-    padding: 20px; /* Adjusted padding */
+
+    // Preload images and set the container's min-height
+    async preloadImagesAndSetContainerHeight() {
+      if (this.apiResults && this.apiResults.website_results && this.apiResults.website_results.length > 0) {
+        const imageHeights = await Promise.all(this.apiResults.website_results.map((result, index) => {
+          return new Promise(resolve => {
+            const img = new Image();
+            img.src = result.spaces_dir;
+            img.onload = () => {
+              // Apply the same styles as .result-image to the image
+              img.style.maxHeight = '250px';
+              img.style.maxWidth = '300px';
+              img.style.width = '100%';
+              img.style.height = '100%';
+              img.style.objectFit = 'contain';
+
+              // Store the preloaded image
+              this.preloadedImages[index] = img.src;
+
+              // Create a temporary container to hold the image
+              const tempDiv = document.createElement('div');
+              tempDiv.style.visibility = 'hidden';
+              tempDiv.style.position = 'absolute';
+              tempDiv.style.top = '0';
+              tempDiv.style.left = '0';
+              tempDiv.style.width = '300px'; // max-width of .result-image
+              tempDiv.style.height = '250px'; // max-height of .result-image
+              tempDiv.appendChild(img);
+              document.body.appendChild(tempDiv);
+
+              // Get the displayed height of the image
+              const displayedHeight = img.clientHeight;
+
+              // Clean up the temporary elements
+              document.body.removeChild(tempDiv);
+
+              resolve(displayedHeight);
+            };
+
+            img.onerror = () => {
+              console.error(`Failed to preload image: ${result.spaces_dir}`);
+              // Assign a default height if image fails to load
+              resolve(0);
+            };
+          });
+        }));
+
+        const tallestHeight = Math.max(...imageHeights);
+        // Add extra space for text and other elements (adjust as needed)
+        this.containerMinHeight = tallestHeight + 150;
+      } else {
+        // If no results, set a default min-height
+        this.containerMinHeight = 300; // Adjust as needed
+      }
+    },
+
+    // Update displayed image size when the image loads or window resizes
+    updateDisplayedImageSize() {
+      const img = this.$refs.demoImage;
+      if (img) {
+        let naturalWidth = img.naturalWidth;
+        let naturalHeight = img.naturalHeight;
+
+        // Check if the image height exceeds the maximum height
+        if (naturalHeight > this.maxImageHeight) {
+          const scalingFactor = this.maxImageHeight / naturalHeight;
+          this.displayedImageHeight = this.maxImageHeight;
+          this.displayedImageWidth = naturalWidth * scalingFactor;
+        } else {
+          this.displayedImageHeight = img.clientHeight;
+          this.displayedImageWidth = img.clientWidth;
+        }
+      }
+    },
+
+    // Initialize ResizeObserver to monitor image size changes
+    initResizeObserver() {
+      const img = this.$refs.demoImage;
+      if (img) {
+        this.resizeObserver = new ResizeObserver(entries => {
+          for (let entry of entries) {
+            if (entry.target === img) {
+              this.displayedImageWidth = img.clientWidth;
+              this.displayedImageHeight = img.clientHeight;
+            }
+          }
+        });
+        this.resizeObserver.observe(img);
+      }
+    },
+
+    // Cleanup ResizeObserver
+    destroyResizeObserver() {
+      if (this.resizeObserver) {
+        this.resizeObserver.disconnect();
+        this.resizeObserver = null;
+      }
+    },
+
+    // Method called when image is loaded
+    onImageLoad() {
+      const img = this.$refs.demoImage;
+      if (img) {
+        this.imageWidth = img.naturalWidth;
+        this.imageHeight = img.naturalHeight;
+      }
+      this.updateDisplayedImageSize();
+      this.initResizeObserver(); // Start observing size changes
+      if (this.imageNeedsProcessing) {
+        this.fetchTokenAndSendImage(); // Now that the image is loaded, fetch token and send image
+        this.imageNeedsProcessing = false; // Reset the flag
+      }
+    },
+
+    // Initialize availableImages array by importing all images from assets/api_images/
+    initializeAvailableImages() {
+      this.availableImages = requireImages.keys().map(key => requireImages(key));
+    },
+
+    // Select a random image from availableImages
+    selectRandomImage() {
+      if (this.availableImages.length === 0) {
+        console.error('No images found in assets/api_images/.');
+        return;
+      }
+      const randomIndex = Math.floor(Math.random() * this.availableImages.length);
+      this.imageSrc = this.availableImages[randomIndex];
+      this.imageNeedsProcessing = true;
+      this.boundingBoxes = []; // Clear existing bounding boxes
+      this.apiResults = null;  // Clear previous API results
+      this.currentResultIndex = 0;
+      this.currentImageIndex = randomIndex;
+      this.currentImageSourceType = 'local';
+    },
+  },
+  created() {
+    // Initialize availableImages when the component is created
+    this.initializeAvailableImages();
+    // Select a random image to display initially
+    this.selectRandomImage();
+  },
+  mounted() {
+    // The @load event on the img tag handles onImageLoad
+    window.addEventListener('resize', this.updateDisplayedImageSize);
+  },
+  beforeUnmount() {
+    window.removeEventListener('resize', this.updateDisplayedImageSize);
+    this.destroyResizeObserver(); // Clean up observer
+  },
+};
+</script>
+
+<style scoped>
+/* API Search Section */
+.api-search-section {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 70vh;
+  background: #10113300; /* Transparent background */
+  padding: 0px;
+}
+
+.playground-container {
+  width: 100%;
+  max-width: 1000px;
+  padding: 30px;
+  border-radius: 15px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid #9b51e0;
+  box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.3);
+  position: relative;
+  text-align: left;
+  margin-top: 25px;
+  overflow: hidden; /* Ensure content doesn't overflow */
+}
+
+/* Playground content styling */
+.playground-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  color: #ccc;
+}
+
+.right-content {
+  flex: 1;
+  color: #ffffff;
+  text-align: left;
+  padding-left: 20px;
+}
+
+/* Styling for the Playground Title */
+.playground-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #ffffff;
+  margin-bottom: 15px;
+}
+
+/* Styling for the List Steps */
+.playground-content ol li {
+  font-size: 1rem;
+  font-weight: 300;
+  color: #dddddd;
+  margin-left: 20px;
+}
+
+/* Styling the List Numbers */
+.playground-content ol li::marker {
+  color: #9b51e0;
+  font-weight: bold;
+}
+
+.playground-content ol li span {
+  color: #9b51e0;
+}
+
+/* Image processing container */
+.image-processing-container {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  margin-top: 30px;
+}
+
+.demo-image-container {
+  flex: 1;
+  margin: 0;
+  max-width: 100%;
+}
+
+.demo-image {
+  background: rgba(32, 12, 60, 0.8);
+  border-radius: 15px;
+  padding: 0px;
+  box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.3);
+  text-align: center;
+  max-width: 475px;  /* Set maximum width */
+  max-height: 250px; /* Set maximum height */
+  margin: 0 auto;    /* Center the container */
+  overflow: hidden;  /* Ensure bounding boxes don't overflow */
+}
+
+.image-container {
+  position: relative;
+  display: inline-block; /* Changed from width: 100% to inline-block */
+}
+
+.demo-image img {
+  max-width: 475px;  /* Set a maximum width */
+  max-height: 250px; /* Set a maximum height */
+  width: auto;
+  height: auto;
+  object-fit: contain; /* Maintains aspect ratio */
+  border-radius: 10px;
+}
+
+/* Bounding Boxes */
+.bounding-box {
+  position: absolute;
+  cursor: pointer;
+}
+
+/* Demo Buttons */
+.demo-buttons {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 15px;
+}
+
+.demo-button {
+  background-color: #6A1D85;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 20px;
+  margin: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.demo-button:hover {
+  background-color: #7326a6;
+}
+
+/* API Results Styling */
+.api-results {
+  margin-top: 20px;
+}
+
+.result-item {
+  text-align: center;
+}
+
+.result-content {
+  display: flex;
+  align-items: flex-start;
+}
+
+.result-image {
+  max-height: 250px; /* Set a maximum height */
+  max-width: 300px;  /* Set a maximum width */
+  width: 100%;
+  height: 100%;
+  object-fit: contain; /* Ensures the image maintains aspect ratio */
+  border-radius: 10px;
+  margin-right: 20px; /* Space between image and text */
+}
+
+.result-details {
+  color: #ffffff;
+  text-align: left;
+}
+
+.result-details h3 {
+  font-size: 1.2rem;
+  margin: 5px 0;
+}
+
+.result-details p {
+  margin: 3px 0;
+}
+
+.pagination-buttons {
+  margin-top: 10px;
+  text-align: center;
+}
+
+.pagination-button {
+  background-color: #9b51e0;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  margin: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.pagination-button:hover {
+  background-color: #7326a6;
+}
+
+/* Active Pagination Button */
+.pagination-button.active {
+  background-color: #7326a6;
+  border: 2px solid #ffffff;
+}
+
+.pagination-button.active:hover {
+  background-color: #5a1f94;
+}
+
+/* Fade-in and Fade-out animation */
+.fade-enter-active, .fade-leave-active, .fade-appear-active {
+  transition: opacity 0.5s;
+}
+.fade-enter-from, .fade-leave-to, .fade-appear-from {
+  opacity: 0;
+}
+.fade-enter-to, .fade-leave-from, .fade-appear-to {
+  opacity: 1;
+}
+
+/* Loading Indicator */
+.loading-indicator {
+  text-align: center;
+  color: #ffffff;
+  font-size: 1.2rem;
+  margin-top: 20px;
+}
+
+/* Responsive Adjustments */
+
+/* Laptop Screens */
+@media (min-width: 1024px) and (max-width: 1440px) {
+  .playground-title {
+    font-size: 1.5rem;
   }
-  
+
+  .playground-content ol li {
+    font-size: 1.1rem;
+  }
+}
+
+/* Tablets and Smaller Laptops */
+@media (max-width: 1024px) {
   .playground-container {
-    width: 100%; /* Adjust based on your desired width */
-    max-width: 1000px;
-    padding: 30px; /* Adjusted padding */
-    border-radius: 15px;
-    background: rgba(255, 255, 255, 0.1); /* Transparent white background */
-    border: 2px solid #9b51e0; /* Purple border */
-    box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.3); /* Soft shadow */
-    position: relative; /* Ensure this is set */
-    text-align: center;
-    margin-top: 25px; /* Adjusted spacing */
+    padding: 25px;
   }
-  
-  .title-holder {
-    position: absolute;
-    top: -25px; /* Adjust this value as needed */
-    right: 70%; /* Adjust this value as needed */
-    background: #260853; /* Purple background */
-    padding: 10px 30px;
-    border-radius: 10px;
-    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
-    border: 2px solid #9b51e0; /* Purple border */
+
+  .playground-title {
+    font-size: 1.3rem;
   }
-  
+
+  .playground-content ol li {
+    font-size: 1rem;
+  }
+
+  .image-processing-container {
+    flex-direction: column;
+    align-items: center;
+  }
+}
+
+/* Mobile Devices */
+@media (max-width: 768px) {
+  .playground-container {
+    padding: 20px;
+  }
+
   .playground-title {
     font-size: 1.2rem;
-    font-weight: bold;
-    color: #fff; /* White color for title */
-    margin: 0;
   }
-  
+
+  .playground-content ol li {
+    font-size: 0.9rem;
+  }
+
   .playground-content {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start; /* Align items to the top */
-    color: #ccc; /* Light color for text */
-    margin-top: 30px; /* Add spacing between content and title holder */
+    flex-direction: column;
+    align-items: center;
   }
-  
-  /* Left content styling */
-  .left-content {
-    flex: 1;
-    color: #ffffff;
-    text-align: left;
-    padding-right: 20px; /* Space between left and right content */
-  }
-  
-  /* Right content styling */
+
   .right-content {
-    flex: 1;
-    color: #ffffff;
-    text-align: left;
-    padding-left: 20px; /* Space between left and right content */
+    padding-left: 0;
+    text-align: center;
   }
-  
-  /* Styling for instructions */
-  .demo-instructions {
-    font-size: 1.5rem;
-    font-weight: 800;
-    color: #ffffff;
-    margin-bottom: 10px;
+
+  .playground-content ol li {
+    margin-left: 0;
   }
-  
-  .playground-content ol {
-    list-style: none;
-    padding: 0;
-  }
-  
-  .playground-content li {
-    margin: 10px 0;
-    font-size: 1.2rem;
-    color: #ffffff;
-  }
-  
-  .playground-content li span {
-    color: #9b51e0; /* Highlight color for numbers */
-  }
-  
-  /* Image processing container */
+
   .image-processing-container {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-top: 30px;
+    flex-direction: column;
+    align-items: center;
   }
-  
-  .demo-image-container,
-  .cropped-images-container {
-    flex: 1;
-    margin: 10px;
+
+  .result-content {
+    flex-direction: column;
+    align-items: center;
   }
-  
-  .demo-image {
-    background: rgba(32, 12, 60, 0.8); /* Darker background */
-    border-radius: 15px;
-    padding: 20px;
-    border: 2px solid #9b51e0; /* Purple border */
-    box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.3); /* Soft shadow */
-    text-align: center;
-  }
-  
-  .demo-image img {
-    max-height: 200px; /* Adjust this value as needed for your design */
-    max-width: 100%; /* Ensures image doesn't overflow horizontally */
+
+  .result-image {
+    margin-right: 0;
+    margin-bottom: 10px;
+    width: 100%;
+    max-width: none;
     height: auto;
-    width: auto;
-    border-radius: 10px;
-    
   }
-  
-  .cropped-images-container {
-    background: rgba(32, 12, 60, 0.8);
-    border-radius: 15px;
-    padding: 20px;
-    border: 2px solid #9b51e0;
-    box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.3);
+
+  .result-details {
     text-align: center;
-    max-height: 250px; /* Set a maximum height for the scrollable area */
-    overflow-y: auto; /* Make the container scrollable vertically */
   }
-  
-  .cropped-image {
-    margin: 0;
-    margin-bottom: 15px;
-  }
-  
-  .cropped-image img {
-    max-width: 100%;
-    border-radius: 10px;
-  }
-  
-  .demo-buttons {
-    display: flex;
-    justify-content: space-around;
-    margin-top: 10px;
-  }
-  
-  .demo-button {
-    background-color: #9b51e0;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    padding: 10px 20px;
-    margin: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-  }
-  
-  .demo-button:hover {
-    background-color: #7326a6;
-  }
-  
-  /* Responsive Adjustments */
-  
-  /* Laptop Screens */
-  @media (min-width: 1024px) and (max-width: 1440px) {
-    .playground-title {
-      font-size: 1.5rem;
-    }
-  
-    .demo-instructions {
-      font-size: 1.6rem;
-    }
-  
-    .playground-content li {
-      font-size: 1.3rem;
-    }
-  }
-  
-  /* Tablets and Smaller Laptops */
-  @media (max-width: 1024px) {
-    .playground-container {
-      padding: 25px;
-    }
-  
-    .playground-title {
-      font-size: 1.3rem;
-    }
-  
-    .demo-instructions {
-      font-size: 1.4rem;
-    }
-  
-    .playground-content li {
-      font-size: 1.2rem;
-    }
-  
-    .title-holder {
-      margin-bottom: -20px;
-    }
-  
-    .image-processing-container {
-      flex-direction: column;
-      align-items: center;
-    }
-  }
-  
-  /* Mobile Devices */
-  @media (max-width: 768px) {
-    .playground-container {
-      padding: 20px;
-    }
-  
-    .playground-title {
-      font-size: 1.2rem;
-    }
-  
-    .demo-instructions {
-      font-size: 1.2rem;
-    }
-  
-    .playground-content {
-      flex-direction: column;
-      align-items: center;
-    }
-  
-    .left-content,
-    .right-content {
-      padding: 0;
-      text-align: center;
-    }
-  
-    .playground-content li {
-      font-size: 1.1rem;
-    }
-  
-    .title-holder {
-      margin-bottom: -15px;
-    }
-  
-    .image-processing-container {
-      flex-direction: column;
-      align-items: center;
-    }
-  }
-  </style>
-  
+}
+</style>
