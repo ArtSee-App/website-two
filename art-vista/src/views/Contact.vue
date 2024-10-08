@@ -4,6 +4,11 @@
     <Header />
     <main>
       <h1 class="animated-title">Contact Us 📬</h1>
+      <div class="subtitle-container">
+        <p class="subtitle">
+          Reach out to us for any inquiries, feedback, or assistance. In case the buttons below don't work, you can contact us at <a href="mailto:contact@artvista.app">contact@artvista.app</a>
+        </p>
+      </div>
       
       <!-- Contact Buttons -->
       <div class="contact-buttons">
@@ -21,8 +26,9 @@
         </button>
       </div>
     </main>
-    <Footer />
+    
   </div>
+  <Footer />
 </template>
 
 <script>
@@ -127,11 +133,11 @@ export default {
           break;
         case 'account_problems':
           subject = 'Account Assistance';
-          body = 'Dear ArtVista Team,\n\n[Please replace this text with your message and escribe the issue you are having with your account, including any error messages or relevant information.]\n';
+          body = 'Dear ArtVista Team,\n\n[Please replace this text with your message and describe the issue you are having with your account, including any error messages or relevant information.]\n';
           break;
         default:
           subject = 'Contact Inquiry';
-          body = 'Dear ArtVista Team,\n\n[Please replace this text with your message and rovide as many relevant details as possible.]\n';
+          body = 'Dear ArtVista Team,\n\n[Please replace this text with your message and provide as many relevant details as possible.]\n';
       }
       
       // Construct mailto link
@@ -165,12 +171,32 @@ main {
   position: relative;
   text-align: center;
   color: #e9e9e9;
-  margin-bottom: 40px;
+  margin-bottom: 20px; /* Reduced margin to accommodate subtitle */
   font-size: 2.5rem;
   cursor: pointer;
   overflow: hidden;
 }
 
+/* Subtitle Container Styling */
+.subtitle-container {
+  max-width: 600px; /* Adjust this value as needed */
+  margin: 0 auto; /* Center the container */
+}
+
+.subtitle {
+  font-size: 1.1rem;
+  color: #e9e9e9;
+  margin-bottom: 30px; /* Space between subtitle and buttons */
+  line-height: 1.5;
+}
+
+/* Make the email address a clickable link */
+.subtitle a {
+  color: #03C1FD;
+  text-decoration: underline;
+}
+
+/* Animated Title Hover Effect */
 .animated-title::before {
   content: "";
   position: absolute;
@@ -230,7 +256,6 @@ main {
   min-height: 140px; /* Increased minimum height for better vertical spacing */
   position: relative;
   overflow: hidden;
-  /* Removed margin to control spacing solely via gap */
 }
 
 .contact-button::before {
@@ -298,6 +323,16 @@ main {
 @media (max-width: 768px) {
   .animated-title {
     font-size: 1.8rem;
+  }
+
+  .subtitle-container {
+    max-width: 100%;
+    padding: 0 15px;
+  }
+
+  .subtitle {
+    font-size: 1rem;
+    margin-bottom: 30px;
   }
 
   .contact-buttons {

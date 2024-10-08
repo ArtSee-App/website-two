@@ -1,12 +1,13 @@
+<!-- src/components/Footer.vue -->
 <template>
   <footer>
     <p>&copy; 2024 ArtVista</p>
     <ul>
-      <li><a href="#contact">Contact us</a></li>
-      <li><a href="#about">About Us</a></li>
+      <li><router-link to="/contact">Contact Us</router-link></li>
+      <li><router-link to="/about">About Us</router-link></li>
       <li><a href="#news">News</a></li>
-      <li><a href="https://www.linkedin.com/company/artvista-app/">LinkedIn</a></li>
-      <li><a href="https://www.instagram.com/artvista.app/">Instagram</a></li>
+      <li><a href="https://www.linkedin.com/company/artvista-app/" target="_blank" rel="noopener noreferrer">LinkedIn</a></li>
+      <li><a href="https://www.instagram.com/artvista.app/" target="_blank" rel="noopener noreferrer">Instagram</a></li>    
     </ul>
   </footer>
 </template>
@@ -26,7 +27,7 @@ footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: #00000000; /* Optional: Add a background color for better contrast */
+  background-color: transparent; /* Optional: Add a background color for better contrast */
 }
 
 /* Navigation Links Container */
@@ -43,14 +44,18 @@ li {
 }
 
 /* Navigation Links Styling */
-a {
+a,
+.router-link-active,
+.router-link-exact-active {
   color: white;
   text-decoration: none;
   font-size: 16px;
   transition: color 0.3s ease;
 }
 
-a:hover {
+a:hover,
+.router-link-active:hover,
+.router-link-exact-active:hover {
   color: #1D88F0; /* Example hover color */
 }
 
@@ -59,23 +64,34 @@ a:hover {
 /* Mobile View: 768px and below */
 @media screen and (max-width: 768px) {
   footer {
-    flex-direction: column; /* Stack elements vertically */
-    align-items: center;    /* Center-align items */
-    text-align: center;     /* Center-align text */
+    /* Keep items in a row and allow wrapping if necessary */
+    flex-wrap: wrap;
+    justify-content: center; /* Center the content horizontally */
+    padding: 15px 0;
+  }
+
+  footer p {
+    width: 100%;
+    text-align: center;
+    margin-bottom: 10px;
   }
 
   ul {
-    flex-direction: column; /* Stack navigation links vertically */
-    align-items: center;    /* Center-align navigation links */
-    margin-top: 15px;       /* Add space between text and links */
+    flex-wrap: wrap; /* Allow items to wrap if necessary */
+    justify-content: center; /* Center the items */
+    margin-top: 0; /* Remove top margin */
   }
 
   li {
-    margin: 10px 0; /* Adjust margins for vertical stacking */
+    margin-left: 10px;
+    margin-right: 10px;
+    margin-bottom: 5px; /* Add bottom margin for spacing when wrapping occurs */
   }
 
-  a {
-    font-size: 18px; /* Increase font size for better readability on mobile */
+  a,
+  .router-link-active,
+  .router-link-exact-active {
+    font-size: 14px; /* Make text smaller */
   }
 }
 </style>

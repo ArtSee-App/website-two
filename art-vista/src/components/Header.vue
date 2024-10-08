@@ -34,7 +34,7 @@
           <li><router-link to="/api" @click="closeSidebar">API</router-link></li>
           <li><router-link to="/about" @click="closeSidebar">About</router-link></li>
           <li><router-link to="/contact" @click="closeSidebar">Contact</router-link></li>
-          <li><router-link to="/partners" @click="closeSidebar">Become Partners</router-link></li>
+          
         </ul>
       </div>
     </transition>

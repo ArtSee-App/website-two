@@ -28,10 +28,10 @@
       <div class="buttons">
         <!-- Desktop Buttons -->
         <div class="desktop-buttons">
-          <a href="https://apps.apple.com/app/idYOUR_APP_ID" target="_blank" rel="noopener noreferrer">
+          <a href="https://apps.apple.com/nl/app/artvista-art-companion/id6503986684?l=en-GB" target="_blank" rel="noopener noreferrer">
             <button class="get-app-btn">Download on the App Store</button>
           </a>
-          <a href="https://play.google.com/store/apps/details?id=YOUR_APP_PACKAGE" target="_blank" rel="noopener noreferrer">
+          <a href="https://play.google.com/store/apps/details?id=com.artvista&hl=en" target="_blank" rel="noopener noreferrer">
             <button class="get-app-btn">Get it on Google Play</button>
           </a>
         </div>
@@ -81,7 +81,7 @@ export default {
       if (/android/i.test(userAgent)) {
         window.location.href = 'https://play.google.com/store/apps/details?id=com.artvista&hl=en';
       } else if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) {
-        window.location.href = 'https://apps.apple.com/sa/app/artvista-art-companion/id6503986684?uo=2';
+        window.location.href = 'https://apps.apple.com/nl/app/artvista-art-companion/id6503986684?l=en-GB';
       } else {
         // Fallback if OS is not detected
         alert('Unable to detect your operating system. Please choose your app store manually.');
