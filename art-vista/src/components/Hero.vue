@@ -26,8 +26,20 @@
       </ul>
       <!-- Action Buttons for the App -->
       <div class="buttons">
-        <button class="get-app-btn">Get the app</button>
-        <button class="partner-btn">Become a partner</button>
+        <!-- Desktop Buttons -->
+        <div class="desktop-buttons">
+          <a href="https://apps.apple.com/app/idYOUR_APP_ID" target="_blank" rel="noopener noreferrer">
+            <button class="get-app-btn">Download on the App Store</button>
+          </a>
+          <a href="https://play.google.com/store/apps/details?id=YOUR_APP_PACKAGE" target="_blank" rel="noopener noreferrer">
+            <button class="get-app-btn">Get it on Google Play</button>
+          </a>
+        </div>
+        
+        <!-- Mobile Single Button -->
+        <div class="mobile-button" v-if="isMobile">
+          <button class="get-app-btn" @click="redirectToAppStore">Get the App</button>
+        </div>
       </div>
     </div>
 
@@ -46,6 +58,35 @@ export default {
   name: "Hero",
   components: {
     PromoVideo
+  },
+  data() {
+    return {
+      isMobile: false
+    }
+  },
+  mounted() {
+    this.checkIfMobile();
+    window.addEventListener('resize', this.checkIfMobile);
+  },
+  beforeUnmount() {
+    window.removeEventListener('resize', this.checkIfMobile);
+  },
+  methods: {
+    checkIfMobile() {
+      this.isMobile = window.innerWidth <= 768;
+    },
+    redirectToAppStore() {
+      const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+      
+      if (/android/i.test(userAgent)) {
+        window.location.href = 'https://play.google.com/store/apps/details?id=com.artvista&hl=en';
+      } else if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) {
+        window.location.href = 'https://apps.apple.com/sa/app/artvista-art-companion/id6503986684?uo=2';
+      } else {
+        // Fallback if OS is not detected
+        alert('Unable to detect your operating system. Please choose your app store manually.');
+      }
+    }
   }
 }
 </script>
@@ -124,10 +165,9 @@ export default {
 
 /* List item styling */
 .hero-titles ul li {
-  margin-bottom: 10px; /* Space between list items */
+  margin-bottom: 20px; /* Space between list items */
   font-size: 1.2rem; /* Font size for list items */
   position: relative; /* Required for additional styling */
-  margin-bottom: 20px; /* Additional spacing below items */
   font-weight: 300; /* Light font weight for list items */
 }
 
@@ -142,25 +182,66 @@ export default {
 /* Button container styling */
 .buttons {
   margin-top: 20px; /* Space above the buttons */
+  display: flex; /* Arrange buttons horizontally */
+  gap: 20px; /* Space between buttons */
+  flex-wrap: wrap; /* Allow buttons to wrap to the next line if necessary */
+  justify-content: flex-start; /* Align buttons to the start */
 }
 
-/* Styling for both buttons */
-.get-app-btn, .partner-btn {
+/* Desktop Buttons initially visible */
+.desktop-buttons {
+  display: flex;
+  gap: 20px; /* Ensure gap is applied specifically to desktop buttons */
+}
+
+/* Mobile Button initially hidden */
+.mobile-button {
+  display: none;
+}
+
+/* Styling for the "Get App" buttons */
+.get-app-btn {
   background-color: #6A1D85; /* Primary button color */
   color: white; /* White text color */
   padding: 10px 20px; /* Padding for the buttons */
   border: none; /* No border */
   border-radius: 10px; /* Rounded corners */
-  margin-right: 15px; /* Space between the buttons */
   cursor: pointer; /* Pointer cursor on hover */
-  transition: background-color 0.3s, transform 0.3s; /* Smooth transition for hover effects */
+  transition: transform 0.3s; /* Smooth transition for hover effects */
   font-weight: 500; /* Medium weight for button text */
   /* Optional: Adding box-shadow for better visual appeal */
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  margin-bottom: 10px;
+  /* white-space: nowrap; Removed to allow text wrapping */
+  flex: 0 0 auto; /* Prevent buttons from stretching */
+  max-width: 300px; /* Maintain maximum width */
+  width: auto; /* Allow buttons to size based on content */
 }
 
-/* Animation for Button Colors */
+/* Keyframes for the button gradient animation */
+@keyframes buttonGradientAnimation {
+  0% {
+    background-color: #6A1D85;
+  }
+  33% {
+    background-color: #B902A7;
+  }
+  66% {
+    background-color: #fd7403;
+  }
+  100% {
+    background-color: #6A1D85;
+  }
+}
+
+/* Hover state for desktop buttons */
+@media screen and (min-width: 769px) {
+  .get-app-btn:hover {
+    animation: buttonBackgroundChange 2s linear infinite; /* Background color animation on hover */
+    transform: scale(1.05); /* Slightly increased scale */
+  }
+}
+
+/* Animation for Button Colors on Hover for Desktop */
 @keyframes buttonBackgroundChange {
   0% {
     background-color: #6A1D85;
@@ -176,18 +257,6 @@ export default {
   }
 }
 
-/* Hover state for buttons */
-.get-app-btn:hover, .partner-btn:hover {
-  animation: buttonBackgroundChange 2s linear infinite; /* Background color animation */
-  transform: scale(1.15); /* Existing scale animation */
-}
-
-/* Optional: Active state for buttons */
-.get-app-btn:active, .partner-btn:active {
-  transform: scale(1); /* Return to original size when clicked */
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Slightly reduce shadow */
-}
-
 /* Container styling for the promo video section */
 .promo-video-container {
   flex: 1; /* Allows the promo video section to take up available space */
@@ -197,8 +266,8 @@ export default {
   align-items: center; /* Center align vertically */
 }
 
-/* Responsive design for iPhone screens and small devices */
-@media screen and (max-width: 480px) {
+/* Responsive design for screens where buttons might not fit horizontally */
+@media screen and (max-width: 768px) {
   /* Adjust the hero container to stack vertically */
   .hero-container {
     flex-direction: column; /* Stack items vertically */
@@ -237,21 +306,34 @@ export default {
     text-align: center; /* Center align text */
   }
 
-  /* Hide the "Become a partner" button */
-  .partner-btn {
-    display: none; /* Hide on small screens */
+  /* Center and stack the "Get the App" buttons vertically */
+  .buttons {
+    justify-content: center; /* Center the buttons horizontally */
+    gap: 15px; /* Maintain spacing between buttons */
+    flex-direction: column; /* Stack buttons vertically */
+    align-items: center; /* Center align buttons */
   }
 
-  /* Center the "Get the app" button */
-  .buttons {
-    display: flex;
-    justify-content: center; /* Center the button */
+  .desktop-buttons {
+    display: none; /* Hide desktop buttons on mobile */
+  }
+
+  .mobile-button {
+    display: block; /* Show mobile button on mobile */
+    width: 100%;
   }
 
   .get-app-btn {
-    margin-right: 0; /* Remove right margin */
-    width: 100%; /* Make button full width */
-    max-width: 200px; /* Optional: limit maximum width */
+    width: 100%; /* Make buttons full width within their container */
+    max-width: none; /* Remove maximum width restriction */
+    padding: 15px 0; /* Increase vertical padding for bigger buttons */
+    font-size: 1.1rem; /* Increase font size for better readability */
+    border-radius: 12px; /* Slightly larger border radius for a more prominent look */
+    
+    /* Apply continuous gradient animation */
+    animation: buttonGradientAnimation 5s linear infinite; /* Continuous color change */
+    /* Remove transform transition to prevent interference with the animation */
+    transform: none;
   }
 }
 </style>

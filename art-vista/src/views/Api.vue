@@ -3,10 +3,7 @@
   <div class="api-page">
     <Header />
     <main>
-      <HeroApi /> <!-- Include the HeroApi component here -->
-      <h1>API Page</h1>
-      <p>Welcome to the API page!</p>
-      <!-- Add your API page content here -->
+      <HeroApi />
     </main>
     <Footer />
   </div>

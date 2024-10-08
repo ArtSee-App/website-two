@@ -927,12 +927,14 @@ export default {
 
   .playground-content {
     flex-direction: column;
-    align-items: center;
+    align-items: flex-start; /* Changed from center to flex-start */
   }
 
   .right-content {
     padding-left: 0;
-    text-align: center;
+    text-align: left; /* Changed from center to left */
+    width: 100%; /* Ensures full width usage */
+    max-width: none; /* Removes width constraints */
   }
 
   .playground-content ol li {
@@ -960,5 +962,21 @@ export default {
   .result-details {
     text-align: center;
   }
+
+  /* Responsive Image Adjustments */
+  .demo-image {
+    max-width: 100%; /* Remove fixed max-width */
+    width: 100%;     /* Ensure container takes full width */
+    max-height: none;/* Remove fixed max-height */
+    height: auto;    /* Let height adjust based on width */
+  }
+
+  .demo-image img {
+    width: 100%;      /* Make image take full container width */
+    height: auto;     /* Maintain aspect ratio */
+    max-width: 100%;  /* Remove fixed max-width */
+    max-height: none; /* Remove fixed max-height */
+  }
+
 }
 </style>

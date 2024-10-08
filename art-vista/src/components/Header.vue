@@ -1,3 +1,4 @@
+<!-- Header.vue -->
 <template>
   <header :class="{ scrolled }">
     <nav>
@@ -7,15 +8,10 @@
       </div>
       <!-- Desktop Navigation Links -->
       <ul class="nav-links">
-        <li><router-link to="/">App</router-link></li>
+        <li><router-link to="/">Home</router-link></li>
         <li><router-link to="/api">API</router-link></li>
-        <li><router-link to="/about">About Us</router-link></li>
-        <!-- Optional: Become Partners button in desktop -->
-        <!--
-        <li class="partners-button">
-          <router-link to="/partners">Become Partners</router-link>
-        </li>
-        -->
+        <li><router-link to="/about">About</router-link></li>
+        <li><router-link to="/contact">Contact</router-link></li>
       </ul>
       <!-- Animated Hamburger Menu Button -->
       <button
@@ -33,8 +29,11 @@
     <!-- Sidebar with Transition -->
     <transition name="slide">
       <div v-if="sidebarOpen" class="sidebar">
-        <ul>
-          <li><router-link to="/" @click="closeSidebar">App</router-link></li>
+        <ul class="sidebar-links">
+          <li><router-link to="/" @click="closeSidebar">Home</router-link></li>
+          <li><router-link to="/api" @click="closeSidebar">API</router-link></li>
+          <li><router-link to="/about" @click="closeSidebar">About</router-link></li>
+          <li><router-link to="/contact" @click="closeSidebar">Contact</router-link></li>
           <li><router-link to="/partners" @click="closeSidebar">Become Partners</router-link></li>
         </ul>
       </div>
@@ -249,35 +248,34 @@ header.scrolled::before {
   height: 100%;
   background: rgba(0, 0, 0, 0.95);
   padding-top: 60px;
-  /* transform: translateX(100%); */
   transition: transform 0.3s ease;
   z-index: 1001;
 }
 
-.sidebar ul {
+.sidebar-links {
   list-style: none;
   padding: 0;
 }
 
-.sidebar li {
+.sidebar-links li {
   margin: 20px 0;
   text-align: center;
 }
 
-.sidebar a {
+.sidebar-links a {
   color: white;
   text-decoration: none;
   font-size: 20px;
 }
 
-.sidebar .partners-button a {
+.sidebar-links .partners-button a {
   background-color: #ff4081; /* Example color */
   padding: 10px 20px;
   border-radius: 5px;
   transition: background-color 0.3s ease;
 }
 
-.sidebar .partners-button a:hover {
+.sidebar-links .partners-button a:hover {
   background-color: #e91e63; /* Darker shade on hover */
 }
 
@@ -327,7 +325,7 @@ header.scrolled::before {
 }
 
 /* Responsive design */
-@media screen and (max-width: 768px) {
+@media screen and (max-width: 767px) {
   .nav-links {
     display: none;
   }
@@ -342,7 +340,6 @@ header.scrolled::before {
     width: 100%;
     border-radius: 0;
     top: 0; /* Remove the 20px space from the top */
-    padding-top: 0; /* Remove any top padding */
     padding: 10px 20px; /* Adjust other padding as needed */
   }
 
@@ -354,19 +351,23 @@ header.scrolled::before {
     width: 200px;
   }
 
-  .sidebar a {
+  .sidebar-links li {
+    margin: 15px 0; /* Adjusted for smaller screens */
+  }
+
+  .sidebar-links a {
     font-size: 18px;
   }
 
   /* Optional: Become Partners button styling in sidebar */
-  .sidebar .partners-button a {
+  .sidebar-links .partners-button a {
     background-color: #ff4081;
     padding: 10px 20px;
     border-radius: 5px;
     transition: background-color 0.3s ease;
   }
 
-  .sidebar .partners-button a:hover {
+  .sidebar-links .partners-button a:hover {
     background-color: #e91e63;
   }
 }
@@ -410,5 +411,4 @@ header.scrolled::before {
     display: none;
   }
 }
-
 </style>

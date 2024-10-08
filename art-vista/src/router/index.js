@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import Home from '../views/Home.vue'
 import Api from '@/views/Api.vue';
 import About from '@/views/About.vue';
+import Contact from '@/views/Contact.vue';
 
 const routes = [
   {
@@ -18,6 +19,11 @@ const routes = [
     path: '/about',
     name: 'About',
     component: About
+  },
+  {
+    path: '/Contact',
+    name: 'Contact',
+    component: Contact
   },
   // Redirect any unknown paths to Home
   {
