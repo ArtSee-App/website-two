@@ -181,6 +181,31 @@ export default {
       }
     },
 
+    // New method to handle paste events
+    handlePasteEvent(event) {
+      const clipboardItems = event.clipboardData.items;
+      for (let i = 0; i < clipboardItems.length; i++) {
+        const item = clipboardItems[i];
+        if (item.type.indexOf('image') !== -1) {
+          const blob = item.getAsFile();
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            this.imageSrc = e.target.result;
+            this.imageNeedsProcessing = true;
+            this.currentImageSourceType = 'pasted';
+            this.currentImageIndex = null;
+            this.boundingBoxes = []; // Clear existing bounding boxes
+            this.apiResults = null;  // Clear previous API results
+            this.currentResultIndex = 0;
+          };
+          reader.readAsDataURL(blob);
+          // Prevent the default paste action
+          event.preventDefault();
+          break; // Stop processing after the first image
+        }
+      }
+    },
+
     // Fetch a random photo from assets/api_images/
     fetchRandomPhoto() {
       if (this.availableImages.length === 0) {
@@ -620,9 +645,15 @@ export default {
   mounted() {
     // The @load event on the img tag handles onImageLoad
     window.addEventListener('resize', this.updateDisplayedImageSize);
+
+    // Add paste event listener
+    window.addEventListener('paste', this.handlePasteEvent);
+
   },
   beforeUnmount() {
     window.removeEventListener('resize', this.updateDisplayedImageSize);
+    window.removeEventListener('paste', this.handlePasteEvent);
+    
     this.destroyResizeObserver(); // Clean up observer
   },
 };

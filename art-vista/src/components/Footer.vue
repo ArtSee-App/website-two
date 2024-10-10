@@ -5,7 +5,7 @@
     <ul>
       <li><router-link to="/contact">Contact Us</router-link></li>
       <li><router-link to="/about">About Us</router-link></li>
-      <li><a href="#news">News</a></li>
+      <li><router-link to="/terms">Terms and Conditions</router-link></li>
       <li><a href="https://www.linkedin.com/company/artvista-app/" target="_blank" rel="noopener noreferrer">LinkedIn</a></li>
       <li><a href="https://www.instagram.com/artvista.app/" target="_blank" rel="noopener noreferrer">Instagram</a></li>    
     </ul>

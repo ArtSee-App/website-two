@@ -3,6 +3,7 @@ import Home from '../views/Home.vue'
 import Api from '@/views/Api.vue';
 import About from '@/views/About.vue';
 import Contact from '@/views/Contact.vue';
+import Terms from '@/views/Terms.vue';
 
 const routes = [
   {
@@ -24,6 +25,11 @@ const routes = [
     path: '/Contact',
     name: 'Contact',
     component: Contact
+  },
+  {
+    path: '/terms',
+    name: 'Terms',
+    component: Terms
   },
   // Redirect any unknown paths to Home
   {

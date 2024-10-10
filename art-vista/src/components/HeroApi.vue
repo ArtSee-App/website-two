@@ -69,16 +69,20 @@ export default {
     };
   },
   methods: {
-    startCycling() {
-      this.cycleInterval = setInterval(() => {
-        if (!this.isHovered) {
-          this.currentActiveIndex = (this.currentActiveIndex + 1) % this.bullets.length;
-        }
-      }, 3500); // Changed to 3.5 seconds for better readability
+      startCycling() {
+      if (!this.cycleInterval) { // Prevent multiple intervals
+        this.cycleInterval = setInterval(() => {
+          if (!this.isHovered) {
+            this.currentActiveIndex = (this.currentActiveIndex + 1) % this.bullets.length;
+          }
+        }, 3500); // 3.5 seconds for readability
+      }
     },
     stopCycling() {
-      clearInterval(this.cycleInterval);
-      this.cycleInterval = null;
+      if (this.cycleInterval) {
+        clearInterval(this.cycleInterval);
+        this.cycleInterval = null;
+      }
     },
     onHover(index) {
       this.isHovered = true;
